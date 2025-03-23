@@ -1,0 +1,78 @@
+<!-- users/templates/users/edit_profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>Edycja profilu</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Imię i nazwisko -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Imię i nazwisko</label>
+                        <p class="text-muted small">Podaj swoje pełne imię i nazwisko</p>
+                        {{ profile_form.name }}
+                    </div>
+
+                    <!-- Telefon -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Telefon</label>
+                        <p class="text-muted small">Podaj numer telefonu kontaktowego</p>
+                        {{ profile_form.phone }}
+                    </div>
+
+                    <!-- Zdjęcie profilowe -->
+                    <!-- W edit_profile.html -->
+<div class="mb-4">
+    <label class="form-label fw-bold">Zdjęcie profilowe</label>
+    <p class="text-muted small">Wybierz zdjęcie, które będzie wyświetlane w Twoim profilu (zostanie automatycznie przycięte do kwadratu)</p>
+
+    <div class="row">
+        {% if user.profile.photo %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header p-2">Aktualne zdjęcie</div>
+                <div class="card-body text-center p-2">
+                    <img src="{{ user.profile.photo.url }}" alt="Aktualne zdjęcie" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="mt-2">
+                <input type="file" name="photo" accept="image/*" id="id_photo" class="form-control">
+                {% if profile_form.photo.errors %}
+                    {% for error in profile_form.photo.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <input type="file" name="photo" accept="image/*" id="id_photo" class="form-control">
+            {% if profile_form.photo.errors %}
+                {% for error in profile_form.photo.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+                    <!-- Przyciski -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'profile' %}" class="btn btn-secondary">Anuluj</a>
+                        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
