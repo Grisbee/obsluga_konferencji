@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Nagłówek kalendarza -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Widok tygodniowy</h1>
+                <div>
+                    <a href="{% url 'meeting_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nowe spotkanie
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nawigacja kalendarza -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-start">
+                        <a href="{% url 'calendar_week' year=prev_year week=prev_week %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-chevron-left"></i> Poprzedni
+                        </a>
+                        <a href="{% url 'calendar_week' year=next_year week=next_week %}" class="btn btn-outline-secondary">
+                            Następny <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h3>Tydzień {{ week }}, {{ year }}</h3>
+                    <p class="text-muted">
+                        {{ days.0|date:"d.m.Y" }} - {{ days.6|date:"d.m.Y" }}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'calendar_month' year=days.0|date:'Y' month=days.0|date:'m' %}" class="btn btn-outline-secondary me-2">
+                            Widok miesięczny
+                        </a>
+                        <a href="{% url 'calendar_week' year=today.year week=today.isocalendar.1 %}" class="btn btn-outline-primary">
+                            Dzisiaj
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kalendarz tygodniowy -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">Godzina</th>
+                            {% for day in days %}
+                            <th style="width: 13%;" class="text-center {% if day.date == today.date %}bg-info bg-opacity-10{% endif %}">
+                                {{ day|date:"l" }}<br>
+                                <span class="fw-bold">{{ day|date:"d.m" }}</span>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hour in "78910111213141516171819202122"|make_list %}
+                        <tr>
+                            <td class="text-center align-middle">{{ hour }}:00</td>
+                            {% for i in "0123456"|make_list %}
+                            <td class="position-relative {% if days|get_item:i|date:'Y-m-d' == today|date:'Y-m-d' %}bg-info bg-opacity-10{% endif %}" style="height: 60px;">
+                                {% for meeting in meetings_by_day|get_item:i %}
+                                {% if meeting.start_time.hour == hour|add:"0" %}
+                                <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
+                                    {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}"
+                                    style="position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
+                                    {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
+                                </a>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .meeting-link {
+        text-decoration: none;
+    }
+</style>
+
+{% endblock %}

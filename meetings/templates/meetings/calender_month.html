@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Nagłówek kalendarza -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Kalendarz spotkań</h1>
+                <div>
+                    <a href="{% url 'meeting_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nowe spotkanie
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nawigacja kalendarza -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-start">
+                        <a href="{% url 'calendar_month' year=prev_year month=prev_month %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-chevron-left"></i> Poprzedni
+                        </a>
+                        <a href="{% url 'calendar_month' year=next_year month=next_month %}" class="btn btn-outline-secondary">
+                            Następny <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h3>{{ month_name }} {{ year }}</h3>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'calendar_week' year=year week=today.isocalendar.1 %}" class="btn btn-outline-secondary me-2">
+                            Widok tygodniowy
+                        </a>
+                        <a href="{% url 'calendar_month' year=today.year month=today.month %}" class="btn btn-outline-primary">
+                            Dzisiaj
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kalendarz -->
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-bordered calendar-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Poniedziałek</th>
+                        <th>Wtorek</th>
+                        <th>Środa</th>
+                        <th>Czwartek</th>
+                        <th>Piątek</th>
+                        <th>Sobota</th>
+                        <th>Niedziela</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                    <tr style="height: 120px;">
+                        {% for day in week %}
+                        <td class="position-relative {% if day == 0 %}bg-light{% endif %} {% if day == today.day and month == today.month and year == today.year %}bg-info bg-opacity-10{% endif %}">
+                            {% if day != 0 %}
+                            <div class="date-number">{{ day }}</div>
+                            
+                            <div class="meetings-container mt-2">
+                                {% for meeting in meetings_by_day|get_item:day|slice:":3" %}
+                                <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
+                                    {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}">
+                                    {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
+                                </a>
+                                {% endfor %}
+                                
+                                {% if meetings_by_day|get_item:day|length > 3 %}
+                                <div class="text-muted small mt-1">+ {{ meetings_by_day|get_item:day|length|add:"-3" }} więcej</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar-table th {
+        text-align: center;
+    }
+    
+    .date-number {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-weight: bold;
+    }
+    
+    .meetings-container {
+        margin-top: 20px;
+        overflow-y: auto;
+        max-height: 80px;
+        font-size: 12px;
+    }
+    
+    .meeting-link {
+        text-decoration: none;
+    }
+</style>
+
+{% endblock %}
