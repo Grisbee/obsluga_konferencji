@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Potwierdzenie usunięcia</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Czy na pewno chcesz usunąć spotkanie <strong>{{ meeting.title }}</strong>?</p>
+                    <p>Data: {{ meeting.start_time|date:"d.m.Y H:i" }} - {{ meeting.end_time|date:"d.m.Y H:i" }}</p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Ta operacja jest nieodwracalna. 
+                        Wszyscy uczestnicy stracą dostęp do tego spotkania.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="btn btn-secondary">Anuluj</a>
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Tak, usuń to spotkanie</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.meetings_home, name="meetings_home"),
-    
+
     # Widoki kalendarza
     path('calendar/<int:year>/<int:month>/', views.calendar_month_view, name='calendar_month'),
     path('calendar/week/<int:year>/<int:week>/', views.calendar_week_view, name='calendar_week'),
@@ -21,4 +21,6 @@ urlpatterns = [
     # Zarządzanie przypomnieniami
     path('<int:pk>/reminder/', views.set_reminder, name='set_reminder'),
     path('<int:pk>/reminder/delete/', views.delete_reminder, name='delete_reminder'),
+
+    path('<int:pk>/toggle-active/', views.toggle_meeting_active, name='toggle_meeting_active'),
 ]

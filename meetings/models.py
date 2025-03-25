@@ -13,6 +13,7 @@ class Meeting(models.Model):
     participants = models.ManyToManyField(User, through='MeetingParticipant', related_name="meetings", verbose_name="Uczestnicy")
     meeting_link = models.URLField(blank=True, null=True, verbose_name="Link do spotkania")
     room_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Kod pokoju")
+    is_active = models.BooleanField(default=False, verbose_name="Aktywne")
     
     class Meta:
         ordering = ['start_time']

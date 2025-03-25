@@ -33,7 +33,6 @@ class MeetingForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super(MeetingForm, self).__init__(*args, **kwargs)
         
-        # Wykluczamy aktualnego użytkownika z listy uczestników
         if self.user:
             self.fields['participants'].queryset = User.objects.exclude(id=self.user.id)
     
@@ -42,11 +41,9 @@ class MeetingForm(forms.ModelForm):
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
         
-        # Sprawdzenie czy data rozpoczęcia jest w przyszłości
         if start_time and start_time < timezone.now():
             self.add_error('start_time', 'Data rozpoczęcia musi być w przyszłości')
         
-        # Sprawdzenie czy data zakończenia jest późniejsza niż data rozpoczęcia
         if start_time and end_time and end_time <= start_time:
             self.add_error('end_time', 'Czas zakończenia musi być późniejszy niż czas rozpoczęcia')
         
@@ -54,19 +51,17 @@ class MeetingForm(forms.ModelForm):
     
     def save(self, commit=True):
         meeting = super().save(commit=False)
-        if self.user and not meeting.pk:  # Tylko dla nowego spotkania
+        if self.user and not meeting.pk:
             meeting.creator = self.user
         
         if commit:
             meeting.save()
-            # Zapisujemy uczestników
+            
             selected_participants = self.cleaned_data.get('participants', [])
             
-            # Czyszczenie istniejących powiązań (przy edycji)
             if meeting.pk:
                 MeetingParticipant.objects.filter(meeting=meeting).delete()
             
-            # Dodawanie uczestników
             for participant in selected_participants:
                 MeetingParticipant.objects.create(
                     meeting=meeting,

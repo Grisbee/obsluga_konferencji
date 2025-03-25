@@ -71,16 +71,14 @@
                             <div class="date-number">{{ day }}</div>
                             
                             <div class="meetings-container mt-2">
-                                {% for meeting in meetings_by_day|get_item:day|slice:":3" %}
-                                <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
-                                    {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}">
-                                    {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
-                                </a>
+                                {% for meeting in meetings %}
+                                    {% if meeting.start_time.day == day %}
+                                    <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
+                                        {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}">
+                                        {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
+                                    </a>
+                                    {% endif %}
                                 {% endfor %}
-                                
-                                {% if meetings_by_day|get_item:day|length > 3 %}
-                                <div class="text-muted small mt-1">+ {{ meetings_by_day|get_item:day|length|add:"-3" }} więcej</div>
-                                {% endif %}
                             </div>
                             {% endif %}
                         </td>
@@ -116,5 +114,4 @@
         text-decoration: none;
     }
 </style>
-
 {% endblock %}

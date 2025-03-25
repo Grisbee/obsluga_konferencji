@@ -38,7 +38,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex justify-content-end">
-                        <a href="{% url 'calendar_month' year=days.0|date:'Y' month=days.0|date:'m' %}" class="btn btn-outline-secondary me-2">
+                        <a href="{% url 'calendar_month' year=days.0.year month=days.0.month %}" class="btn btn-outline-secondary me-2">
                             Widok miesięczny
                         </a>
                         <a href="{% url 'calendar_week' year=today.year week=today.isocalendar.1 %}" class="btn btn-outline-primary">
@@ -67,19 +67,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for hour in "78910111213141516171819202122"|make_list %}
+                        {% for hour in hours %}
                         <tr>
                             <td class="text-center align-middle">{{ hour }}:00</td>
-                            {% for i in "0123456"|make_list %}
-                            <td class="position-relative {% if days|get_item:i|date:'Y-m-d' == today|date:'Y-m-d' %}bg-info bg-opacity-10{% endif %}" style="height: 60px;">
-                                {% for meeting in meetings_by_day|get_item:i %}
-                                {% if meeting.start_time.hour == hour|add:"0" %}
-                                <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
-                                    {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}"
-                                    style="position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
-                                    {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
-                                </a>
-                                {% endif %}
+                            {% for day in days %}
+                            <td class="position-relative {% if day.date == today.date %}bg-info bg-opacity-10{% endif %}" style="height: 60px;">
+                                {% for meeting in meetings %}
+                                    {% if meeting.start_time.hour == hour and meeting.start_time.date == day.date %}
+                                    <a href="{% url 'meeting_detail' pk=meeting.pk %}" class="d-block text-truncate meeting-link mb-1 px-1 py-1 rounded
+                                        {% if meeting.creator == user %}bg-primary text-white{% else %}bg-secondary bg-opacity-25{% endif %}"
+                                        style="position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
+                                        {{ meeting.start_time|time:"H:i" }} - {{ meeting.title }}
+                                    </a>
+                                    {% endif %}
                                 {% endfor %}
                             </td>
                             {% endfor %}
@@ -97,5 +97,4 @@
         text-decoration: none;
     }
 </style>
-
 {% endblock %}

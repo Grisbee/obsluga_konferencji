@@ -9,6 +9,17 @@ import calendar as cal
 from .models import Meeting, MeetingParticipant, Reminder
 from .forms import MeetingForm, ParticipantResponseForm, ReminderForm
 
+from django import template
+
+register = template.Library()
+
+@register.filter
+def get_item(dictionary, key):
+    """Pobiera element z słownika za pomocą klucza - przydatne w szablonach."""
+    if not dictionary:
+        return []
+    return dictionary.get(key, [])
+
 def meetings_home(request):
     """Strona główna spotkań - przekierowanie do kalendarza bieżącego miesiąca"""
     now = timezone.now()
@@ -33,8 +44,10 @@ def calendar_month_view(request, year=None, month=None):
     cal_month = cal.monthcalendar(year, month)
     month_name = cal.month_name[month]
     
-    # Pobieranie spotkań dla zalogowanego użytkownika
+    # Określanie pierwszego i ostatniego dnia miesiąca
     start_date = datetime(year, month, 1, tzinfo=timezone.get_current_timezone())
+    
+    # Ustalenie końca miesiąca
     if month == 12:
         end_date = datetime(year + 1, 1, 1, tzinfo=timezone.get_current_timezone())
     else:
@@ -44,17 +57,9 @@ def calendar_month_view(request, year=None, month=None):
     meetings = Meeting.objects.filter(
         Q(start_time__gte=start_date, start_time__lt=end_date) &
         (Q(creator=request.user) | Q(participants=request.user))
-    ).distinct()
+    ).distinct().order_by('start_time')
     
-    # Organizujemy spotkania według dni
-    meetings_by_day = {}
-    for meeting in meetings:
-        day = meeting.start_time.day
-        if day not in meetings_by_day:
-            meetings_by_day[day] = []
-        meetings_by_day[day].append(meeting)
-    
-    # Obliczanie poprzedniego i następnego miesiąca
+    # Obliczanie poprzedniego i następnego miesiąca - POPRAWIONA SEKCJA
     if month == 1:
         prev_month = 12
         prev_year = year - 1
@@ -74,9 +79,9 @@ def calendar_month_view(request, year=None, month=None):
         'month': month,
         'month_name': month_name,
         'calendar': cal_month,
-        'meetings_by_day': meetings_by_day,
+        'meetings': meetings,
         'today': today,
-        'prev_month': prev_month,
+        'prev_month': prev_month,  # Upewnij się, że ta zmienna jest zdefiniowana
         'prev_year': prev_year,
         'next_month': next_month,
         'next_year': next_year,
@@ -117,41 +122,39 @@ def calendar_week_view(request, year=None, week=None):
         (Q(creator=request.user) | Q(participants=request.user))
     ).distinct().order_by('start_time')
     
-    # Organizujemy spotkania według dni
+    # Tworzymy listę dni
     days = []
-    meetings_by_day = {}
-    
     for i in range(7):
-        day = start_date + timedelta(days=i)
-        days.append(day)
-        meetings_by_day[i] = []
-        
-        for meeting in meetings:
-            if meeting.start_time.date() == day.date():
-                meetings_by_day[i].append(meeting)
+        days.append(start_date + timedelta(days=i))
     
-    # Obliczanie poprzedniego i następnego tygodnia
+    # Obliczanie poprzedniego i następnego tygodnia - POPRAWIONA SEKCJA
     if week == 1:
-        prev_week = cal.monthcalendar(year-1, 12)[-1][0]  # Ostatni tydzień poprzedniego roku
+        prev_week = 52  # Zakładamy, że poprzedni rok ma 52 tygodnie
         prev_year = year - 1
     else:
         prev_week = week - 1
         prev_year = year
         
-    if week == 52 or week == 53:  # W zależności od roku
+    if week == 52:  # Zakładamy, że większość lat ma 52 tygodnie
         next_week = 1
         next_year = year + 1
     else:
         next_week = week + 1
         next_year = year
     
+    # Dodajmy godziny jako pełne obiekty, nie tylko stringi
+    hours = []
+    for h in range(7, 23):  # Od 7:00 do 22:00
+        hours.append(h)
+    
     context = {
         'year': year,
         'week': week,
         'days': days,
-        'meetings_by_day': meetings_by_day,
+        'hours': hours,
+        'meetings': meetings,
         'today': today,
-        'prev_week': prev_week,
+        'prev_week': prev_week,  # Upewnij się, że ta zmienna jest zdefiniowana
         'prev_year': prev_year,
         'next_week': next_week,
         'next_year': next_year,
@@ -223,8 +226,11 @@ def meeting_detail(request, pk):
         messages.error(request, 'Nie masz dostępu do tego spotkania.')
         return redirect('meetings_home')
     
-    # Jeśli użytkownik jest uczestnikiem, pobieramy jego status
+    # Inicjalizacja zmiennej participant przed użyciem
+    participant = None
     participant_status = None
+    
+    # Jeśli użytkownik jest uczestnikiem, pobieramy jego status
     if request.user != meeting.creator:
         participant = MeetingParticipant.objects.filter(meeting=meeting, user=request.user).first()
         if participant:
@@ -311,5 +317,26 @@ def delete_reminder(request, pk):
     if request.method == 'POST':
         reminder.delete()
         messages.success(request, 'Przypomnienie zostało usunięte.')
+    
+    return redirect('meeting_detail', pk=meeting.pk)
+
+@login_required
+def toggle_meeting_active(request, pk):
+    """Aktywacja/deaktywacja spotkania przez właściciela"""
+    meeting = get_object_or_404(Meeting, pk=pk)
+    
+    # Tylko właściciel może aktywować/deaktywować spotkanie
+    if meeting.creator != request.user:
+        messages.error(request, 'Tylko organizator spotkania może je aktywować lub deaktywować.')
+        return redirect('meeting_detail', pk=meeting.pk)
+    
+    # Zmień stan aktywności
+    meeting.is_active = not meeting.is_active
+    meeting.save()
+    
+    if meeting.is_active:
+        messages.success(request, 'Spotkanie zostało aktywowane. Uczestnicy mogą teraz dołączyć.')
+    else:
+        messages.success(request, 'Spotkanie zostało dezaktywowane.')
     
     return redirect('meeting_detail', pk=meeting.pk)
