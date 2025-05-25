@@ -1,0 +1,34 @@
+<!-- users/templates/users/profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>Profil użytkownika</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        {% if user.profile.photo %}
+                            <img src="{{ user.profile.photo.url }}" alt="Zdjęcie profilowe" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                        {% else %}
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 150px; height: 150px;">
+                                <h1>{{ user.username.0|upper }}</h1>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <h4>{{ user.username }}</h4>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>Nazwa:</strong> {{ user.profile.name|default:"Nie podano" }}</p>
+                        <p><strong>Telefon:</strong> {{ user.profile.phone|default:"Nie podano" }}</p>
+                        <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edytuj profil</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">{{ meeting.title }}</h2>
+                    <div>
+                        {% if is_creator %}
+                        <form method="post" action="{% url 'toggle_meeting_active' pk=meeting.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn {% if meeting.is_active %}btn-warning{% else %}btn-success{% endif %} btn-sm me-2">
+                                {% if meeting.is_active %}
+                                <i class="fas fa-stop-circle"></i> Dezaktywuj spotkanie
+                                {% else %}
+                                <i class="fas fa-play-circle"></i> Aktywuj spotkanie
+                                {% endif %}
+                            </button>
+                        </form>
+                        <a href="{% url 'meeting_edit' pk=meeting.pk %}" class="btn btn-light btn-sm me-2">
+                            <i class="fas fa-edit"></i> Edytuj
+                        </a>
+                        <a href="{% url 'meeting_delete' pk=meeting.pk %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Usuń
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if meeting.is_active %}
+                <div class="alert alert-success m-0 text-center fw-bold">
+                    <i class="fas fa-check-circle me-2"></i>Spotkanie jest aktywne! Uczestnicy mogą dołączyć.
+                </div>
+                {% else %}
+                <div class="alert alert-warning m-0 text-center fw-bold">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {% if is_creator %}
+                    Spotkanie jest nieaktywne. Aktywuj je, aby uczestnicy mogli dołączyć.
+                    {% else %}
+                    Spotkanie oczekuje na aktywację przez organizatora.
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <!-- Szczegóły spotkania -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Szczegóły spotkania</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th style="width: 40%;" class="text-muted">Organizator:</th>
+                                            <td><span class="badge bg-secondary">{{ meeting.creator.username }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-muted">Data utworzenia:</th>
+                                            <td>{{ meeting.created_at|date:"d.m.Y H:i" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-muted">Czas rozpoczęcia:</th>
+                                            <td><span class="badge bg-success">{{ meeting.start_time|date:"d.m.Y H:i" }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-muted">Czas zakończenia:</th>
+                                            <td><span class="badge bg-danger">{{ meeting.end_time|date:"d.m.Y H:i" }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-muted">Czas trwania:</th>
+                                            <td>{{ meeting.duration_minutes }} minut</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-muted">Status:</th>
+                                            <td>
+                                                {% if meeting.is_active %}
+                                                <span class="badge bg-success">Aktywne</span>
+                                                {% else %}
+                                                <span class="badge bg-warning text-dark">Nieaktywne</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informacje o dostępie -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-link me-2"></i>Informacje o dostępie</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if meeting.meeting_link or meeting.room_code %}
+                                        {% if meeting.is_active or is_creator %}
+                                            {% if meeting.meeting_link %}
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Link do spotkania:</label>
+                                                <div class="input-group">
+                                                    <input type="text" id="meeting-link" class="form-control" value="{{ meeting.meeting_link }}" readonly>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="copyMeetingLink()">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <a href="{{ meeting.meeting_link }}" target="_blank" class="btn btn-success w-100 mb-3">
+                                                <i class="fas fa-video me-2"></i> Dołącz do spotkania
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if meeting.room_code %}
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Kod pokoju:</label>
+                                                <div class="input-group">
+                                                    <input type="text" id="room-code" class="form-control" value="{{ meeting.room_code }}" readonly>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="copyRoomCode()">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-lock me-2"></i>Informacje o dostępie będą widoczne po aktywacji spotkania przez organizatora.
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Nie podano informacji o dostępie do spotkania.
+                                        </div>
+                                        
+                                        {% if is_creator %}
+                                        <a href="{% url 'meeting_edit' pk=meeting.pk %}" class="btn btn-primary w-100">
+                                            <i class="fas fa-link me-2"></i>Dodaj link do spotkania
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                    <!-- Przypomnienie -->
+                                    <div class="mt-4">
+                                        <label class="form-label text-muted">Przypomnienie:</label>
+                                        {% if reminder %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-auto">
+                                                Ustawione na {{ reminder.get_minutes_before_display }} przed spotkaniem
+                                            </div>
+                                            <form method="post" action="{% url 'delete_reminder' pk=meeting.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash me-1"></i>Usuń
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% else %}
+                                        <form method="post" action="{% url 'set_reminder' pk=meeting.pk %}" class="d-flex">
+                                            {% csrf_token %}
+                                            <div class="input-group">
+                                                {{ reminder_form.minutes_before }}
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-bell me-1"></i>Ustaw
+                                                </button>
+                                            </div>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Opis spotkania -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Opis</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if meeting.description %}
+                                    <p>{{ meeting.description|linebreaks }}</p>
+                                    {% else %}
+                                    <p class="text-muted text-center fst-italic">Brak opisu spotkania.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Odpowiedź na zaproszenie -->
+                    {% if participant_status and not is_creator %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-reply me-2"></i>Odpowiedź na zaproszenie</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Twój aktualny status: 
+                                        <span class="badge 
+                                            {% if participant_form.instance.status == 'accepted' %}bg-success
+                                            {% elif participant_form.instance.status == 'declined' %}bg-danger
+                                            {% elif participant_form.instance.status == 'tentative' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ participant_form.instance.get_status_display }}
+                                        </span>
+                                    </p>
+                                    <form method="post" action="{% url 'participant_response' pk=meeting.pk %}">
+                                        {% csrf_token %}
+                                        <div class="input-group">
+                                            {{ participant_form.status }}
+                                            <button type="submit" class="btn btn-primary">Aktualizuj status</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Lista uczestników -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Uczestnicy ({{ meeting.participants.count }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if meeting.meeting_participants.all %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Użytkownik</th>
+                                                    <th>Status</th>
+                                                    <th>Data zaproszenia</th>
+                                                    <th>Data odpowiedzi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for participant in meeting.meeting_participants.all %}
+                                                <tr>
+                                                    <td>{{ participant.user.username }}</td>
+                                                    <td>
+                                                        <span class="badge {% if participant.status == 'accepted' %}bg-success{% elif participant.status == 'declined' %}bg-danger{% elif participant.status == 'tentative' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                            {{ participant.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ participant.invited_at|date:"d.m.Y H:i" }}</td>
+                                                    <td>{% if participant.response_at %}{{ participant.response_at|date:"d.m.Y H:i" }}{% else %}-{% endif %}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted text-center fst-italic">Brak uczestników.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Przyciski nawigacyjne -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'calendar_month' year=meeting.start_time.year month=meeting.start_time.month %}" class="btn btn-secondary">
+                            <i class="fas fa-calendar-alt me-2"></i>Powrót do kalendarza
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyMeetingLink() {
+    var linkInput = document.getElementById("meeting-link");
+    linkInput.select();
+    document.execCommand("copy");
+    
+    showCopyNotification("Link do spotkania skopiowany do schowka!");
+}
+
+function copyRoomCode() {
+    var codeInput = document.getElementById("room-code");
+    codeInput.select();
+    document.execCommand("copy");
+    
+    showCopyNotification("Kod pokoju skopiowany do schowka!");
+}
+
+function showCopyNotification(message) {
+    // Stwórz element powiadomienia
+    var notification = document.createElement("div");
+    notification.className = "alert alert-success copy-notification";
+    notification.style.position = "fixed";
+    notification.style.top = "20px";
+    notification.style.right = "20px";
+    notification.style.zIndex = "1000";
+    notification.style.padding = "10px 20px";
+    notification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
+    notification.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+    
+    // Dodaj do dokumentu
+    document.body.appendChild(notification);
+    
+    // Usuń po 3 sekundach
+    setTimeout(function() {
+        notification.style.opacity = "0";
+        notification.style.transition = "opacity 0.5s";
+        setTimeout(function() {
+            document.body.removeChild(notification);
+        }, 500);
+    }, 3000);
+}
+</script>
+{% endblock %}
