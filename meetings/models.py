@@ -14,6 +14,12 @@ class Meeting(models.Model):
     meeting_link = models.URLField(blank=True, null=True, verbose_name="Link do spotkania")
     room_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Kod pokoju")
     is_active = models.BooleanField(default=False, verbose_name="Aktywne")
+
+    code = models.CharField(max_length=8, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.code
     
     class Meta:
         ordering = ['start_time']
@@ -80,3 +86,4 @@ class Reminder(models.Model):
     
     def __str__(self):
         return f"Przypomnienie: {self.meeting.title} dla {self.user.username}, {self.minutes_before} min przed"
+    

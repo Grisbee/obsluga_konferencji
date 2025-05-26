@@ -23,4 +23,11 @@ urlpatterns = [
     path('<int:pk>/reminder/delete/', views.delete_reminder, name='delete_reminder'),
 
     path('<int:pk>/toggle-active/', views.toggle_meeting_active, name='toggle_meeting_active'),
+
+    # Zarządzanie lobby
+    path('', views.meeting_lobby, name='meetings_home'),
+    path('new/', views.new_meeting, name='new_meeting'),
+    path('join/', views.join_meeting, name='join_meeting'),
+    path('<str:code>/', views.meeting_detail, name='meeting_detail'),
+
 ]

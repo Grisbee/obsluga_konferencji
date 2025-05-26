@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card p-4 shadow-lg">
+        <h2 class="text-center">Logowanie</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="form-label">Nazwa użytkownika</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Hasło</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Zaloguj</button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="{% url 'register' %}">Nie masz konta? Zarejestruj się</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

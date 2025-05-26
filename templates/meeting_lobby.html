@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+    <div class="row w-100">
+        <div class="col-md-6 text-center text-md-start">
+            <h1 class="fw-bold">Rozmowy i spotkania wideo dla wszystkich</h1>
+            <p class="text-muted">Połączenia, współpraca i kontakty z dowolnego miejsca w Twojej aplikacji.</p>
+            
+            <div class="d-flex flex-column flex-md-row gap-2">
+                <a href="{% url 'new_meeting' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-camera-video"></i> Nowe spotkanie
+                </a>
+                <form method="POST" action="{% url 'join_meeting' %}" class="input-group">
+                    {% csrf_token %}
+                    <input type="text" name="meeting_code" class="form-control" placeholder="Wpisz kod lub link" required>
+                    <button class="btn btn-outline-secondary" type="submit">Dołącz</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-center align-items-center">
+            <img src="/static/images/meeting_lobby_illustration.png" alt="Illustration" class="img-fluid rounded shadow-lg">
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -11,6 +11,12 @@ from .forms import MeetingForm, ParticipantResponseForm, ReminderForm
 
 from django import template
 
+# Meeting lobby
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from .models import Meeting
+import uuid
+
 register = template.Library()
 
 @register.filter
@@ -340,3 +346,21 @@ def toggle_meeting_active(request, pk):
         messages.success(request, 'Spotkanie zostało dezaktywowane.')
     
     return redirect('meeting_detail', pk=meeting.pk)
+
+def meeting_lobby(request):
+    return render(request, 'meetings/meeting_lobby.html')
+
+def new_meeting(request):
+    """Creates a new meeting and redirects to its page."""
+    meeting = Meeting.objects.create(code=str(uuid.uuid4())[:8])
+    return redirect(reverse('meeting_detail', args=[meeting.code]))
+
+def join_meeting(request):
+    """Handles joining a meeting by code."""
+    if request.method == 'POST':
+        code = request.POST.get('meeting_code')
+        try:
+            meeting = Meeting.objects.get(code=code)
+            return redirect(reverse('meeting_detail', args=[meeting.code]))
+        except Meeting.DoesNotExist:
+            return render(request, 'meetings/meeting_lobby.html', {'error': 'Nie znaleziono spotkania.'})
